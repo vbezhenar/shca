@@ -1,0 +1,54 @@
+#!/bin/sh
+bindir=`dirname "$0"`
+datadir="$bindir/../data"
+
+better_datadir=`realpath --relative-to="$PWD" "$datadir" 2>/dev/null`
+if [ "$?" -eq 0 ]; then
+  datadir=$better_datadir
+fi
+
+cd "$datadir" || {
+  echo "Can't cd into data directory \"$datadir\", run \"$bindir/init\" to initialize data directory" >&2
+  exit 1
+}
+
+type=$1
+name=$2
+if [ -z "$type" -o -z "$name" ]; then
+  cat <<eof
+Usage: $0 type name
+  type: certificate type, corresponds to [type x509_extensions] section in $bindir/openssl.cnf
+  name: certificate name, corresponds to Subject CN
+Available types:
+eof
+  grep '\[.* x509_extensions\]' ../bin/openssl.cnf | sed 's/\[\(.*\) x509_extensions\]/  \1/' | grep -v '^  ca$'
+  exit 1
+fi
+
+if [ -e "$name/certificate.pem" ]; then
+  echo "Certificate \"$datadir/$name/certificate.pem\" already exists" >&2
+  exit 1
+fi
+
+mkdir -p "$name" || {
+  echo "Can't create directory \"$datadir/$name\"" >&2
+  exit 1
+}
+
+print_private_key=n
+if [ ! -e "$name/csr.pem" ]; then
+  openssl req -config ../bin/openssl.cnf -new \
+      -newkey rsa -keyout "$name/private_key.pem" -nodes \
+      -out "$name/csr.pem" -subj "/CN=$name/" || {
+    echo "Can't create CSR" >&1
+  }
+  print_private_key=y
+fi
+
+openssl ca -config ../bin/openssl.cnf -in "$name/csr.pem" -out "$name/certificate.pem" -extensions "$type x509_extensions" || {
+  echo "Can't sign CSR" >&2
+  exit 1
+}
+
+[ -e "$datadir/$name/private_key.pem" = y ] && echo "Private key: \"$datadir/$name/private_key.pem\""
+echo "Certificate: \"$datadir/$name/certificate.pem\""

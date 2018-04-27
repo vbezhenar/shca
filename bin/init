@@ -1,0 +1,45 @@
+#!/bin/sh
+bindir=`dirname "$0"`
+datadir="$bindir/../data"
+
+better_datadir=`realpath --relative-to="$PWD" "$datadir" 2>/dev/null`
+if [ "$?" -eq 0 ]; then
+  datadir=$better_datadir
+fi
+
+if [ -e "$datadir" ]; then
+  echo "Data directory \"$datadir\" already exists, remove it to start over" >&2
+  exit 1
+fi
+
+mkdir "$datadir" || {
+  echo "Can't create data directory \"$datadir\"" >&2
+  exit 1
+}
+
+cd "$datadir" || {
+  echo "Can't cd into data directory \"$datadir\"" >&2
+  exit 1
+}
+
+openssl req -config ../bin/openssl.cnf -new -x509 \
+    -newkey rsa -keyout ca_private_key.pem \
+    -out ca_certificate.pem -subj "/CN=CA/" -extensions "ca x509_extensions" || {
+  echo "Can't generate CA certificate" >&2
+  exit 1
+}
+
+mkdir certificates || {
+  echo "Can't create certificates directory \"$datadir/certificates\"" >&2
+  exit 1
+}
+
+touch database.txt || {
+  echo "Can't create database file \"$datadir/database.txt\"" >&2
+  exit 1
+}
+
+echo 01 > serial.txt || {
+  echo "Can't create serial file \"$datadir/serial.txt\"" >&2
+  exit 1
+}

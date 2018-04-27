@@ -1,0 +1,42 @@
+RANDFILE = random
+
+[req]
+distinguished_name = req distinguished_name
+
+[req distinguished_name]
+
+[ca]
+default_ca = default_ca
+
+[default_ca]
+database = database.txt
+new_certs_dir = certificates
+certificate = ca_certificate.pem
+private_key = ca_private_key.pem
+default_md = sha256
+policy = default_ca policy
+serial = serial.txt
+default_days = 365
+
+[default_ca policy]
+commonName = supplied
+
+[ca x509_extensions]
+basicConstraints = CA:TRUE, pathlen:0
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer:always
+keyUsage = cRLSign, keyCertSign
+
+[openvpn_server x509_extensions]
+basicConstraints = CA:FALSE
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer:always
+extendedKeyUsage = serverAuth
+keyUsage = digitalSignature,keyEncipherment
+
+[openvpn_client x509_extensions]
+basicConstraints = CA:FALSE
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer:always
+extendedKeyUsage = clientAuth
+keyUsage = digitalSignature
