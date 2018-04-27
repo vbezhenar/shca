@@ -50,5 +50,5 @@ openssl ca -config ../bin/openssl.cnf -in "$name/csr.pem" -out "$name/certificat
   exit 1
 }
 
-[ -e "$datadir/$name/private_key.pem" = y ] && echo "Private key: \"$datadir/$name/private_key.pem\""
+[ -e "$name/private_key.pem" ] && echo "Private key: \"$datadir/$name/private_key.pem\""
 echo "Certificate: \"$datadir/$name/certificate.pem\""
